@@ -96,8 +96,8 @@ def covidNonIIDUnequal(dataset, num_users):
     return users_dict
 
 def load_dataset(num_users, iidtype):
-    train_dataset = CovidDataset('./train.csv', transform=transforms.Compose([Rescale(64), ToTensor()]))
-    test_dataset = CovidDataset('./test.csv', transform=transforms.Compose([Rescale(64), ToTensor()]))
+    train_dataset = CovidDataset('./train.csv', transform=transforms.Compose([Rescale(32), ToTensor()]))
+    test_dataset = CovidDataset('./test.csv', transform=transforms.Compose([Rescale(32), ToTensor()]))
     train_group, test_group = None, None
     if iidtype == 'iid':
         train_group = covidIID(train_dataset, num_users)
@@ -178,10 +178,15 @@ class ToTensor(object):
         # torch image: C X H X W
 #         print("image type: ", type(image))
 #         print("image shape: ", image.shape)
-        tensor = torch.from_numpy(image)
-        tensor = tensor.unsqueeze(dim=0)
-        return {'image': tensor,
-                'label': torch.from_numpy(label)}
+        tensor_img = torch.from_numpy(image)
+        tensor_img = tensor_img.unsqueeze(dim=0)
+        tensor_img = tensor_img.type('torch.FloatTensor')
+        tensor_lb = torch.from_numpy(label)
+#         print("tensor_img shape: ", tensor_img.shape)
+#         print("tensor_lb shape: ", tensor_lb.shape)
+#         print("tensor_img type: ", type(tensor_img))
+        return {'image': tensor_img,
+                'label': tensor_lb}
 
 def getActualImgs(dataset, indeces, batch_size):
     return DataLoader(FedDataset(dataset, indeces), batch_size=batch_size, shuffle=True)
