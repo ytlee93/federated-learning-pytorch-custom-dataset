@@ -15,6 +15,7 @@ def covidIID(dataset, num_users):
         np.random.seed(i)
         users_dict[i] = set(np.random.choice(indeces, images, replace=False))
         indeces = list(set(indeces) - users_dict[i])
+
     return users_dict
 
 def covidNonIID(dataset, num_users):
@@ -189,4 +190,4 @@ class ToTensor(object):
                 'label': tensor_lb}
 
 def getActualImgs(dataset, indeces, batch_size):
-    return DataLoader(FedDataset(dataset, indeces), batch_size=batch_size, shuffle=True)
+    return DataLoader(FedDataset(dataset, indeces), batch_size=batch_size, shuffle=True, drop_last=True)
