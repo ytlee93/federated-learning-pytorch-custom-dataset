@@ -190,4 +190,4 @@ class ToTensor(object):
                 'label': tensor_lb}
 
 def getActualImgs(dataset, indeces, batch_size):
-    return DataLoader(FedDataset(dataset, indeces), batch_size=batch_size, shuffle=True, drop_last=True)
+    return DataLoader(FedDataset(dataset, indeces), batch_size=batch_size, shuffle=True)
