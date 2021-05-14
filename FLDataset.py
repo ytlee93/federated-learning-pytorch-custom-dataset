@@ -6,6 +6,9 @@ import csv
 import pandas as pd
 import os
 import cv2 
+from itertools import combinations
+import random
+import collections
 # from torchvision.transforms import ToTensor
 
 def covidIID(dataset, num_users):
@@ -18,24 +21,56 @@ def covidIID(dataset, num_users):
 
     return users_dict
 
-def covidNonIID(dataset, num_users):
-    classes, images = 200, 300
+def covidNonIID(dataset, num_users, c_num, noniid_c):
+    classes, images = c_num, len(dataset)/c_num
     classes_indx = [i for i in range(classes)]
     users_dict = {i: np.array([]) for i in range(num_users)}
     indeces = np.arange(classes*images)
-    unsorted_labels = dataset.train_labels.numpy()
-
+    unsorted_labels = dataset.get_labels()
+    
     indeces_unsortedlabels = np.vstack((indeces, unsorted_labels))
+    indeces_unsortedlabels = indeces_unsortedlabels.astype(int)
+    shuffled_indices = np.random.permutation(len(indeces_unsortedlabels[0]))
+    indeces_unsortedlabels[0] = indeces_unsortedlabels[0][shuffled_indices]
+    indeces_unsortedlabels[1] = indeces_unsortedlabels[1][shuffled_indices]
+    print("indeces_unsortedlabels ", indeces_unsortedlabels)
     indeces_labels = indeces_unsortedlabels[:, indeces_unsortedlabels[1, :].argsort()]
     indeces = indeces_labels[0, :]
-
+    indeces_labels.astype(int)
+    indeces.astype(int)
+#     print(indeces_labels)
+    
+#     label list with index
+    index_label = [[] for i in range(c_num)]
+    for i in range(len(indeces_labels[1])):
+        index_label[indeces_labels[1][i]].append(indeces_labels[0][i])
+    print("index_label: ", index_label)
+        
+    client_classes = []
+    comb = []
+    for i in list(combinations(list(range(0,c_num)), noniid_c)):
+        print(i)
+        comb.append(i)
+    print(comb)
+    
+    # classes of client
     for i in range(num_users):
-        np.random.seed(i)
-        temp = set(np.random.choice(classes_indx, 2, replace=False))
-        classes_indx = list(set(classes_indx) - temp)
-        for t in temp:
-            users_dict[i] = np.concatenate((users_dict[i], indeces[t*images:(t+1)*images]), axis=0)
-    return users_dict
+        client_classes.append(comb[i%c_num])
+    client_classes = np.array(client_classes)
+    c = client_classes.flatten()
+    print(client_classes)
+    
+    # count of labels
+    label_count = collections.Counter(c)
+    print(label_count)
+    
+#     for i in range(num_users):
+#         np.random.seed(i)
+#         temp = set(np.random.choice(classes_indx, 2, replace=False))
+#         classes_indx = list(set(classes_indx) - temp)
+#         for t in temp:
+#             users_dict[i] = np.concatenate((users_dict[i], indeces[t*images:(t+1)*images]), axis=0)
+#     return users_dict
 
 def covidNonIIDUnequal(dataset, num_users):
     classes, images = 1200, 50
@@ -96,16 +131,16 @@ def covidNonIIDUnequal(dataset, num_users):
 
     return users_dict
 
-def load_dataset(num_users, iidtype):
-    train_dataset = CovidDataset('./train.csv', transform=transforms.Compose([Rescale(32), ToTensor()]))
-    test_dataset = CovidDataset('./test.csv', transform=transforms.Compose([Rescale(32), ToTensor()]))
+def load_dataset(num_users, iidtype, transform, c_num, noniid_c = 0):
+    train_dataset = CovidDataset('./train.csv', transform=transform)
+    test_dataset = CovidDataset('./test.csv', transform=transform)
     train_group, test_group = None, None
     if iidtype == 'iid':
         train_group = covidIID(train_dataset, num_users)
         test_group = covidIID(test_dataset, num_users)
     elif iidtype == 'noniid':
-        train_group = covidNonIID(train_dataset, num_users)
-        test_group = covidNonIID(test_dataset, num_users)
+        train_group = covidNonIID(train_dataset, num_users, c_num, noniid_c)
+        test_group = covidNonIID(test_dataset, num_users, c_num, noniid_c)
     else:
         train_group = covidNonIIDUnequal(train_dataset, num_users)
         test_group = covidNonIIDUnequal(test_dataset, num_users)
@@ -147,6 +182,13 @@ class CovidDataset(Dataset):
             sample = self.transform(sample)
 
         return sample
+    
+    def get_labels(self):
+        labels = []
+        for i in range(len(self.data_info)):
+            labels.append(self.data_info.iloc[i, 1])
+        
+        return labels
     
 class Rescale(object):
     """Rescale the image in a sample to a given size.
