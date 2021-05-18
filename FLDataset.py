@@ -28,7 +28,7 @@ def covidIID(dataset, num_users):
 def covidNonIID(dataset, num_users, c_num, noniid_c):
     classes, images = c_num, len(dataset)/c_num
     classes_indx = [i for i in range(classes)]
-    users_dict = {i: np.array([]) for i in range(num_users)}
+    users_dict = {i: [] for i in range(num_users)}
     indeces = np.arange(classes*images)
     unsorted_labels = dataset.get_labels()
     
@@ -73,7 +73,7 @@ def covidNonIID(dataset, num_users, c_num, noniid_c):
         index_label[i] = list(index_label[i])
         
     temp = []
-    users_dict = dict.fromkeys(range(10), [])
+#     users_dict = dict.fromkeys(range(10), [])
     print("users_dict ", users_dict)
     for i in range(len(client_classes)):
         for j in range(len(client_classes[i])):
