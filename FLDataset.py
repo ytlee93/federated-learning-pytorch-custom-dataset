@@ -26,19 +26,21 @@ def covidIID(dataset, num_users):
     return users_dict
 
 def covidNonIID(dataset, num_users, c_num, noniid_c):
-    classes, images = c_num, len(dataset)/c_num
+    classes, images = c_num, int(len(dataset)/c_num)
     classes_indx = [i for i in range(classes)]
     users_dict = {i: [] for i in range(num_users)}
     indeces = np.arange(classes*images)
     unsorted_labels = dataset.get_labels()
+    print("In covid non IID: unsorted labels get_labels= ", unsorted_labels)
     
     indeces_unsortedlabels = np.vstack((indeces, unsorted_labels))
-    indeces_unsortedlabels = indeces_unsortedlabels.astype(int)
     shuffled_indices = np.random.permutation(len(indeces_unsortedlabels[0]))
+    print("In covid non IID: shuffled indices = ", shuffled_indices)
     indeces_unsortedlabels[0] = indeces_unsortedlabels[0][shuffled_indices]
     indeces_unsortedlabels[1] = indeces_unsortedlabels[1][shuffled_indices]
-#     print("indeces_unsortedlabels ", indeces_unsortedlabels)
+    print("In covid non IID: indeces_unsortedlabels ", indeces_unsortedlabels)
     indeces_labels = indeces_unsortedlabels[:, indeces_unsortedlabels[1, :].argsort()]
+    print("In covid non IID: indeces_labels ", indeces_labels)
     indeces = indeces_labels[0, :]
     indeces_labels.astype(int)
     indeces.astype(int)
@@ -148,18 +150,18 @@ def covidNonIIDUnequal(dataset, num_users):
 
 def load_dataset(num_users, iidtype, transform, c_num, noniid_c = 0):
     train_dataset = CovidDataset('./train.csv', transform=transform)
-    test_dataset = CovidDataset('./test.csv', transform=transform)
+#     test_dataset = CovidDataset('./test.csv', transform=transform)
     train_group, test_group = None, None
     if iidtype == 'iid':
         train_group = covidIID(train_dataset, num_users)
-        test_group = covidIID(test_dataset, num_users)
+#         test_group = covidIID(test_dataset, num_users)
     elif iidtype == 'noniid':
         train_group = covidNonIID(train_dataset, num_users, c_num, noniid_c)
-        test_group = covidNonIID(test_dataset, num_users, c_num, noniid_c)
+#         test_group = covidNonIID(test_dataset, num_users, c_num, noniid_c)
     else:
         train_group = covidNonIIDUnequal(train_dataset, num_users)
         test_group = covidNonIIDUnequal(test_dataset, num_users)
-    return train_dataset, test_dataset, train_group, test_group
+    return train_dataset, train_group
 
 class FedDataset(Dataset):
     def __init__(self, dataset, indx):
